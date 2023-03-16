@@ -66,7 +66,6 @@
 #include "system/time/sys_time.h"
 #include "app.h"
 
-#include "driver/i2c_temp_sensor/drv_temp_sensor.h"
 #include "driver/bme280/drv_bme280.h"
 
 
