@@ -72,7 +72,8 @@
 void SYS_Tasks ( void )
 {
     /* Maintain system services */
-    
+    SYS_FS_Tasks();
+    DRV_SDMMC_Tasks(sysObj.drvSDMMC0);
 
     /* Maintain Device Drivers */
     DRV_BME280_Tasks(sysObj.drvBME280);
@@ -84,6 +85,8 @@ void SYS_Tasks ( void )
         /* Call Application task APP. */
     APP_Tasks();
 
+    /* Call Application task APP_SDCARD. */
+    APP_SDCARD_Tasks();
 }
 
 /*******************************************************************************

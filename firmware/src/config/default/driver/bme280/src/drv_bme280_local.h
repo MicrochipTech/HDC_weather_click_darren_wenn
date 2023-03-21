@@ -188,45 +188,24 @@ typedef struct
 /* Device states */
 typedef enum
 {
-    DRV_BME280_TASK_INIT,
-    DRV_BME280_TASK_READ_ID,
-    DRV_BME280_TASK_READ_CALIBT,
-    DRV_BME280_TASK_READ_CALIBP,
-    DRV_BME280_TASK_READ_CALIBH1,
-    DRV_BME280_TASK_READ_CALIBH2,
-    DRV_BME280_TASK_POWERMODE_SET,
-    DRV_BME280_SET_OVERSAMPLING1,
-    DRV_BME280_TASK_READ,
-    DRV_BME280_TASK_IDLE,
-    DRV_BME280_TASK_ERROR         
+    DRV_BME280_TASK_STATE_INIT = 0,
+    DRV_BME280_TASK_STATE_READ_ID,
+    DRV_BME280_TASK_STATE_PROCESS_READ_ID,
+    DRV_BME280_TASK_STATE_READ_CALIBT,
+    DRV_BME280_TASK_STATE_PROCESS_READ_CALIBT,
+    DRV_BME280_TASK_STATE_READ_CALIBP,
+    DRV_BME280_TASK_STATE_PROCESS_READ_CALIBP,
+    DRV_BME280_TASK_STATE_READ_CALIBH1,
+    DRV_BME280_TASK_STATE_PROCESS_READ_CALIBH1,
+    DRV_BME280_TASK_STATE_READ_CALIBH2,
+    DRV_BME280_TASK_STATE_PROCESS_READ_CALIBH2,
+    DRV_BME280_TASK_STATE_SET_OVERSAMPLING1,
+    DRV_BME280_TASK_STATE_SET_POWERMODE,
+    DRV_BME280_TASK_STATE_IDLE,
+    DRV_BME280_TASK_STATE_READ,
+    DRV_BME280_TASK_STATE_PROCESS_READ,            
+    DRV_BME280_TASK_STATE_ERROR         
 } DRV_BME280_TASK_STATES;
-
-// *****************************************************************************
-/* DRV_BME280 Active Command
-
-  Summary:
-    Enumeration listing of the active command.
-
-  Description:
-    This enumeration defines the currently active command
-
-  Remarks:
-    None
-*/
-
-typedef enum
-{
-    /* Write command*/
-    DRV_BME280_CMD_WRITE,
-
-    /* Wait for EEPROM internal write complete command */
-    DRV_BME280_CMD_WAIT_WRITE_COMPLETE,
-
-    /* Read command */
-    DRV_BME280_CMD_READ,
-
-} DRV_BME280_CMD;
-
 
 // *****************************************************************************
 /* BME280 Client Instance Object
@@ -287,19 +266,21 @@ typedef struct
      * Pressure readings but also used for initial read of calibration
      * data
     */
-    uint8_t                             readBuffer[DRV_BME280_READ_BUFFER_SIZE];
+    volatile uint8_t                    readBuffer[DRV_BME280_READ_BUFFER_SIZE];
     /* write buffer to start readout requests */
     uint8_t                             writeBuffer[DRV_BME280_WRITE_BUFFER_SIZE];
-    bool                                wrInProgress;
 
     /* config parameters for address and clock speed */
-    DRV_BME280_CONFIG_PARAMS            configParams;
+    DRV_BME280_CONFIG_PARAMS   configParams;
     
     /* Event for the event handler */
     DRV_BME280_EVENT                    event;  
     
     /* Current state of the driver */
     volatile DRV_BME280_TASK_STATES     taskState;
+    
+    /* next state of the driver for asynchronous transactions */
+    DRV_BME280_TASK_STATES              nextTaskState;
     
     /* compensation data */
     DRV_BME280_COMPENSATION_DATA        calibData;

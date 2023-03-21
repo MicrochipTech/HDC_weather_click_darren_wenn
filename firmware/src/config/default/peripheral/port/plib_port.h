@@ -74,6 +74,47 @@
 #define LED0_Get()               (((PORT_REGS->GROUP[2].PORT_IN >> 18U)) & 0x01U)
 #define LED0_PIN                  PORT_PIN_PC18
 
+/*** Macros for SDHC1_SDCD pin ***/
+#define SDHC1_SDCD_Get()               (((PORT_REGS->GROUP[2].PORT_IN >> 20U)) & 0x01U)
+#define SDHC1_SDCD_PIN                  PORT_PIN_PC20
+
+/*** Macros for SDHC1_SDWP pin ***/
+#define SDHC1_SDWP_Get()               (((PORT_REGS->GROUP[2].PORT_IN >> 21U)) & 0x01U)
+#define SDHC1_SDWP_PIN                  PORT_PIN_PC21
+
+/*** Macros for SDHC1_SDDATA0 pin ***/
+#define SDHC1_SDDATA0_Get()               (((PORT_REGS->GROUP[1].PORT_IN >> 18U)) & 0x01U)
+#define SDHC1_SDDATA0_PIN                  PORT_PIN_PB18
+
+/*** Macros for SDHC1_SDDATA1 pin ***/
+#define SDHC1_SDDATA1_Get()               (((PORT_REGS->GROUP[1].PORT_IN >> 19U)) & 0x01U)
+#define SDHC1_SDDATA1_PIN                  PORT_PIN_PB19
+
+/*** Macros for SDHC1_SDDATA2 pin ***/
+#define SDHC1_SDDATA2_Get()               (((PORT_REGS->GROUP[1].PORT_IN >> 20U)) & 0x01U)
+#define SDHC1_SDDATA2_PIN                  PORT_PIN_PB20
+
+/*** Macros for SDHC1_SDDATA3 pin ***/
+#define SDHC1_SDDATA3_Get()               (((PORT_REGS->GROUP[1].PORT_IN >> 21U)) & 0x01U)
+#define SDHC1_SDDATA3_PIN                  PORT_PIN_PB21
+
+/*** Macros for SDHC1_SDCMD pin ***/
+#define SDHC1_SDCMD_Get()               (((PORT_REGS->GROUP[0].PORT_IN >> 20U)) & 0x01U)
+#define SDHC1_SDCMD_PIN                  PORT_PIN_PA20
+
+/*** Macros for SDHC1_SDCK pin ***/
+#define SDHC1_SDCK_Get()               (((PORT_REGS->GROUP[0].PORT_IN >> 21U)) & 0x01U)
+#define SDHC1_SDCK_PIN                  PORT_PIN_PA21
+
+/*** Macros for SWITCH pin ***/
+#define SWITCH_Set()               (PORT_REGS->GROUP[1].PORT_OUTSET = ((uint32_t)1U << 31U))
+#define SWITCH_Clear()             (PORT_REGS->GROUP[1].PORT_OUTCLR = ((uint32_t)1U << 31U))
+#define SWITCH_Toggle()            (PORT_REGS->GROUP[1].PORT_OUTTGL = ((uint32_t)1U << 31U))
+#define SWITCH_OutputEnable()      (PORT_REGS->GROUP[1].PORT_DIRSET = ((uint32_t)1U << 31U))
+#define SWITCH_InputEnable()       (PORT_REGS->GROUP[1].PORT_DIRCLR = ((uint32_t)1U << 31U))
+#define SWITCH_Get()               (((PORT_REGS->GROUP[1].PORT_IN >> 31U)) & 0x01U)
+#define SWITCH_PIN                  PORT_PIN_PB31
+
 // *****************************************************************************
 /* PORT Group
 

@@ -28,6 +28,7 @@
 // *****************************************************************************
 
 #include "app.h"
+#include "app_sdcard.h"
 #include "driver/bme280/drv_bme280.h"
 #include "peripheral/sercom/usart/plib_sercom2_usart.h"
 #include "system/time/sys_time.h"
@@ -43,9 +44,7 @@ const uint8_t main_menu[] =
 {
     "*** BME280 Weather Sensor Demonstration ***\r\n"
     "Connect BME280 Mikroe Click board to EXT1\r\n"
-    "1: Read data from BME280\r\n"
-    "2: Write temperature to EEPROM\r\n"
-    "3: Read temperature from EEPROM\r\n"    
+    "1: Read data from BME280\r\n"  
     "Press any key to clear screen and print menu\r\n\r\n"
 };
 
@@ -102,10 +101,8 @@ void APP_SENSOR_TimerEventHandler(uintptr_t context)
 // *****************************************************************************
 // *****************************************************************************
 
-
 /* TODO:  Add any necessary local functions.
 */
-
 
 // *****************************************************************************
 // *****************************************************************************
@@ -163,7 +160,7 @@ void APP_Tasks ( void )
             SYS_TIME_CallbackRegisterMS(APP_SENSOR_TimerEventHandler, (uintptr_t) &appData,
                     5000, SYS_TIME_PERIODIC);
             
-            printf ("\33[H\33[2J");
+            printf("\33[H\33[2J");
             printf("%s", main_menu);
     
             /* register a callback with the BME280 driver for when new data is available */
@@ -204,8 +201,11 @@ void APP_Tasks ( void )
             fTemperature = ((double) temperature) / 100.0f;
             fPressure = ((double) pressure) / 100.0f;
             fHumidity = ((double) humidity) / 1024.0f;
-            printf("%6ld\tTemperature = %6.2f\tPressure = %7.2f\tHumidity = %5.1f\r\n",
-                    appData.sampleCount, fTemperature, fPressure, fHumidity);
+            //printf("%6ld\tTemperature = %6.2f\tPressure = %7.2f\tHumidity = %5.1f\r\n",
+            //        appData.sampleCount, fTemperature, fPressure, fHumidity);
+            
+            /* log the temperature if SD card is present */
+            APP_SDCARD_Notify(fTemperature, fPressure, fHumidity);
             appData.state = APP_STATE_IDLE;
             break;
 

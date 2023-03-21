@@ -153,7 +153,7 @@ typedef void (*DRV_BME280_APP_CALLBACK)(DRV_BME280_TRANSFER_STATUS event, uintpt
 
   Remarks:
     If the event is DRV_BME280_TRANSFER_STATUS_COMPLETED, it means that the data was
-    transferred successfully.
+    transferred successfully and new weather data is available.
 
     If the event is DRV_BME280_TRANSFER_STATUS_ERROR, it means that the data was not
     transferred successfully.
@@ -185,7 +185,10 @@ typedef void (*DRV_BME280_EVENT_HANDLER )( DRV_BME280_TRANSFER_STATUS event, uin
   Description:
     This routine initializes the BME280 device driver making it ready for
     clients to open and use. The initialization data is specified by the init
-    parameter. 
+    parameter. Initialization is a multi-step process as the BME280 device driver
+    will interrogate the device and read the calibration parameters. This process
+    must be allowed to complete before the driver will respond with 
+    SYS_STATUS_READY.
 
   Precondition:
     None.
@@ -293,9 +296,6 @@ SYS_STATUS DRV_BME280_Status( const SYS_MODULE_INDEX drvIndex );
     identify the caller and the instance of the driver. The ioIntent
     parameter defines how the client interacts with this driver instance.
 
-    This driver is a single client driver, so DRV_BME280_Open API should be
-    called only once until driver is closed.
-
   Precondition:
     Function DRV_BME280_Initialize must have been called before calling this
     function.
@@ -312,7 +312,6 @@ SYS_STATUS DRV_BME280_Status( const SYS_MODULE_INDEX drvIndex );
     identifying both the caller and the module instance).
 
     If an error occurs, the return value is DRV_HANDLE_INVALID. Error can occur
-    - if the  driver has been already opened once and in use.
     - if the driver instance being opened is not initialized or is invalid.
 
   Example:
@@ -415,7 +414,60 @@ void DRV_BME280_Close(const DRV_HANDLE handle);
 */
 bool DRV_BME280_Read(const DRV_HANDLE handle);
 
+// *****************************************************************************
+/* Function:
+    bool DRV_BME280_Get_Temperature(const DRV_HANDLE handle, int32_t* temperature);
+    bool DRV_BME280_Get_Pressure(const DRV_HANDLE handle, uint32_t* pressure);
+    bool DRV_BME280_Get_Humidity(const DRV_HANDLE handle, uint32_t* humidity); 
 
+  Summary:
+    Read the correctly converted Temperature/Pressure/Humidity applying the
+    calibration parameters to the raw uncompensated values.
+
+  Description:
+    These functions return a calibrated version of the last completed read
+    operation from the BME280 driver.
+    The temperature and pressure values will be returned in integers values
+    with a resolution of 0.01 To convert to real values they should be cast to
+    a double and divided by 100.0f
+    The humidity value is returned multiplied by 1024. To convert to real values
+    it should be divided by 1024.0f
+
+
+  Precondition:
+    DRV_BME280_Open must have been called to obtain a valid opened device handle.
+
+  Parameters:
+    handle         - A valid open-instance handle, returned from the driver's
+                      open routine
+    temperature/pressure/humidity
+                   - A pointer to the correct type to receive the return value
+  Returns:
+    true
+        - if the read request is accepted.
+
+    false
+        - if handle is invalid
+
+  Example:
+    <code>
+    int32_t temperature;
+    double fTemperature;
+ 
+    if (DRV_BME280_Get_Temperature(myHandle, &temperature) != true)
+    {
+        // Error handling here
+    }
+    else
+    {
+        fTemperature = ((double) temperature) / 100.0f;   
+    }
+
+    </code>
+
+  Remarks:
+    None.
+*/
 bool DRV_BME280_Get_Temperature(const DRV_HANDLE handle, int32_t* temperature);
 bool DRV_BME280_Get_Pressure(const DRV_HANDLE handle, uint32_t* pressure);
 bool DRV_BME280_Get_Humidity(const DRV_HANDLE handle, uint32_t* humidity);

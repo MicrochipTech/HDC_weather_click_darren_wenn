@@ -33,8 +33,8 @@
 42,PB13,,Available,,,,,,NORMAL
 43,PB14,,Available,,,,,,NORMAL
 44,PB15,,Available,,,,,,NORMAL
-47,PD08,,SERCOM7_PAD0,Digital,High Impedance,n/a,Yes,No,NORMAL
-48,PD09,,SERCOM7_PAD1,Digital,High Impedance,n/a,Yes,No,NORMAL
+47,PD08,,Available,,,,,,NORMAL
+48,PD09,,Available,,,,,,NORMAL
 49,PD10,,Available,,,,,,NORMAL
 50,PD11,,Available,,,,,,NORMAL
 51,PD12,,Available,,,,,,NORMAL
@@ -56,20 +56,20 @@
 71,PC17,,Available,,,,,,NORMAL
 72,PC18,LED0,GPIO,Digital,Out,Low,,,NORMAL
 73,PC19,,Available,,,,,,NORMAL
-74,PC20,,Available,,,,,,NORMAL
-75,PC21,,Available,,,,,,NORMAL
+74,PC20,SDHC1_SDCD,SDHC1_SDCD,Digital,High Impedance,n/a,No,No,NORMAL
+75,PC21,SDHC1_SDWP,SDHC1_SDWP,Digital,High Impedance,n/a,No,No,NORMAL
 76,PC22,,Available,,,,,,NORMAL
 77,PC23,,Available,,,,,,NORMAL
 80,PD20,,Available,,,,,,NORMAL
 81,PD21,,Available,,,,,,NORMAL
 82,PB16,,Available,,,,,,NORMAL
 83,PB17,,Available,,,,,,NORMAL
-84,PB18,,Available,,,,,,NORMAL
-85,PB19,,Available,,,,,,NORMAL
-86,PB20,,Available,,,,,,NORMAL
-87,PB21,,Available,,,,,,NORMAL
-88,PA20,,Available,,,,,,NORMAL
-89,PA21,,Available,,,,,,NORMAL
+84,PB18,SDHC1_SDDATA0,SDHC1_SDDAT0,Digital,High Impedance,n/a,No,No,NORMAL
+85,PB19,SDHC1_SDDATA1,SDHC1_SDDAT1,Digital,High Impedance,n/a,No,No,NORMAL
+86,PB20,SDHC1_SDDATA2,SDHC1_SDDAT2,Digital,High Impedance,n/a,No,No,NORMAL
+87,PB21,SDHC1_SDDATA3,SDHC1_SDDAT3,Digital,High Impedance,n/a,No,No,NORMAL
+88,PA20,SDHC1_SDCMD,SDHC1_SDCMD,Digital,High Impedance,n/a,No,No,NORMAL
+89,PA21,SDHC1_SDCK,SDHC1_SDCK,Digital,High Impedance,n/a,No,No,NORMAL
 92,PA22,,SERCOM3_PAD0,Digital,High Impedance,n/a,Yes,No,NORMAL
 93,PA23,,SERCOM3_PAD1,Digital,High Impedance,n/a,Yes,No,NORMAL
 94,PA24,,Available,,,,,,NORMAL
@@ -91,7 +91,7 @@
 119,PA30,,Available,,,,,,NORMAL
 120,PA31,,Available,,,,,,NORMAL
 121,PB30,,Available,,,,,,NORMAL
-122,PB31,,Available,,,,,,NORMAL
+122,PB31,SWITCH,GPIO,Digital,In,n/a,No,No,NORMAL
 123,PC30,,Available,,,,,,NORMAL
 124,PC31,,Available,,,,,,NORMAL
 125,PB00,,Available,,,,,,NORMAL

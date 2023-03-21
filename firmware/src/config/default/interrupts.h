@@ -66,8 +66,8 @@ void UsageFault_Handler (void);
 void DebugMonitor_Handler (void);
 void SERCOM2_USART_InterruptHandler (void);
 void SERCOM3_I2C_InterruptHandler (void);
-void SERCOM7_I2C_InterruptHandler (void);
 void TC0_TimerInterruptHandler (void);
+void SDHC1_InterruptHandler (void);
 
 
 

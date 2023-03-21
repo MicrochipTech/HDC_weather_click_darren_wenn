@@ -70,7 +70,7 @@ static inline uint32_t _DRV_BME280_MAKE_HANDLE(uint8_t drvIndex, uint8_t clientI
 }
 
 /* parse the read data from the BME280 sensor */
-static bool _DRV_BME280_ParseData(DRV_BME280_OBJ* dObj, const uint8_t* reg_data)
+static bool _DRV_BME280_ParseData(DRV_BME280_OBJ* dObj, volatile uint8_t* reg_data)
 {
     uint32_t data_xlsb;
     uint32_t data_lsb;
@@ -227,7 +227,6 @@ static void _DRV_BME280_PLIBEventHandler(uintptr_t context)
     DRV_BME280_OBJ* dObj = (DRV_BME280_OBJ*) context;
     DRV_BME280_CLIENT_OBJ* clientObj = NULL;
     DRV_BME280_ERROR error;
-    int16_t msb, lsb;
     
     if (dObj == NULL)
     {
@@ -241,7 +240,7 @@ static void _DRV_BME280_PLIBEventHandler(uintptr_t context)
     {
         dObj->status = SYS_STATUS_READY;
         dObj->activeClient = NULL;
-        dObj->taskState = DRV_BME280_TASK_ERROR;
+        dObj->taskState = DRV_BME280_TASK_STATE_ERROR;
         return;
     }
     
@@ -257,75 +256,10 @@ static void _DRV_BME280_PLIBEventHandler(uintptr_t context)
     } 
     else if (dObj->event == DRV_BME280_EVENT_READ_DONE)
     {
-        switch (dObj->taskState)
-        {
-            case DRV_BME280_TASK_READ_ID:
-                /* read ID completed */
-                dObj->deviceID = dObj->readBuffer[0];
-                if (dObj->deviceID == DRV_BME280_CHIP_ID)
-                {
-                    dObj->taskState = DRV_BME280_TASK_READ_CALIBT;
-                } else {
-                    dObj->taskState = DRV_BME280_TASK_ERROR;
-                }
-                break;
-            case DRV_BME280_TASK_READ_CALIBT:
-                /* record the temperature calibration data */
-                dObj->calibData.dig_T1 = DRV_BME280_CONCAT_BYTES(dObj->readBuffer[1], dObj->readBuffer[0]);
-                dObj->calibData.dig_T2 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[3], dObj->readBuffer[2]);
-                dObj->calibData.dig_T3 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[5], dObj->readBuffer[4]);
-                /* advance the initialisation to the next state */
-                dObj->taskState = DRV_BME280_TASK_READ_CALIBP;
-                break;
-            case DRV_BME280_TASK_READ_CALIBP:
-                /* record pressure calibration data */
-                dObj->calibData.dig_P1 = DRV_BME280_CONCAT_BYTES(dObj->readBuffer[1], dObj->readBuffer[0]);
-                dObj->calibData.dig_P2 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[3], dObj->readBuffer[2]);
-                dObj->calibData.dig_P3 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[5], dObj->readBuffer[4]);
-                dObj->calibData.dig_P4 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[7], dObj->readBuffer[6]);
-                dObj->calibData.dig_P5 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[9], dObj->readBuffer[8]);
-                dObj->calibData.dig_P6 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[11], dObj->readBuffer[10]);
-                dObj->calibData.dig_P7 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[13], dObj->readBuffer[12]);
-                dObj->calibData.dig_P8 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[15], dObj->readBuffer[14]);
-                dObj->calibData.dig_P9 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[17], dObj->readBuffer[16]);
-                /* advance the initialisation to the next state */
-                dObj->taskState = DRV_BME280_TASK_READ_CALIBH1;
-                break;            
-            case DRV_BME280_TASK_READ_CALIBH1:
-                /* record humidity calibration data */
-                dObj->calibData.dig_H1 = dObj->readBuffer[0];
-                /* advance the initialisation to the next state */
-                dObj->taskState = DRV_BME280_TASK_READ_CALIBH2;   
-                break;            
-            case DRV_BME280_TASK_READ_CALIBH2:
-                dObj->calibData.dig_H2 = (int16_t) dObj->readBuffer[1] << 8;
-                dObj->calibData.dig_H2 |= dObj->readBuffer[0];
-                dObj->calibData.dig_H3 = dObj->readBuffer[2];
-                
-                msb = (int16_t) (int8_t)dObj->readBuffer[3] * 16;
-                lsb = (int16_t) (dObj->readBuffer[4] & 0x0F);
-                dObj->calibData.dig_H4 = msb | lsb;
-                
-                msb = (int16_t) (int8_t)dObj->readBuffer[5] * 16;
-                lsb = (int16_t) (dObj->readBuffer[4] >> 4);
-                dObj->calibData.dig_H5 = msb | lsb;
-                               
-                dObj->calibData.dig_H6 = dObj->readBuffer[6];                
-                dObj->taskState = DRV_BME280_SET_OVERSAMPLING1;
-                break; 
-            case DRV_BME280_TASK_READ:
-                /* parse the read data from the sensor */
-                _DRV_BME280_ParseData(dObj, dObj->readBuffer);
-                
-                /* compensate the data */
-                dObj->compData.temperature = _DRV_BME280_Compensate_T(&dObj->uncompData, &dObj->calibData);
-                dObj->compData.pressure = _DRV_BME280_Compensate_P(&dObj->uncompData, &dObj->calibData);
-                dObj->compData.humidity = _DRV_BME280_Compensate_H(&dObj->uncompData, &dObj->calibData);
-                dObj->taskState = DRV_BME280_TASK_IDLE;
-                break;
-            default:
-                break;
-        }
+        /* tell the task state machine to advance to the next state */
+        dObj->taskState = dObj->nextTaskState;
+        /* put the next state into error in case of an erroneous callback*/
+        dObj->nextTaskState = DRV_BME280_TASK_STATE_ERROR;
         
         dObj->status = SYS_STATUS_READY;        
         dObj->activeClient = NULL;
@@ -384,7 +318,9 @@ static void _DRV_BME280_ReadReg(DRV_BME280_OBJ* dObj, uint8_t reg, uint8_t lengt
     
     /* this function is used by the driver itself so there is no active client */
     dObj->activeClient = NULL;
+    /* pass this event to the peripheral callback when the read is completed */
     dObj->event = DRV_BME280_EVENT_READ_DONE;
+    /* mark the driver as BUSY */
     dObj->status = SYS_STATUS_BUSY;
             
     /* send the request */
@@ -432,7 +368,7 @@ SYS_MODULE_OBJ DRV_BME280_Initialize(
     dObj->clientObjPool = (DRV_BME280_CLIENT_OBJ*) BME280Init->clientObjPool;
     dObj->nClientsMax = BME280Init->maxClients;
     dObj->plibInterface->callbackRegister(_DRV_BME280_PLIBEventHandler, (uintptr_t) dObj);
-    dObj->taskState = DRV_BME280_TASK_INIT;
+    dObj->taskState = DRV_BME280_TASK_STATE_INIT;
 
     /* set status */
     dObj->status = SYS_STATUS_READY;
@@ -453,7 +389,7 @@ SYS_STATUS DRV_BME280_Status( const SYS_MODULE_INDEX drvIndex )
     /* if the driver is still initializing or in the middle of a read 
      *  return a BUSY status to the application code rather than the true status */
     dObj = &gDrvBME280Obj[drvIndex];
-    if (dObj->taskState != DRV_BME280_TASK_IDLE)
+    if (dObj->taskState != DRV_BME280_TASK_STATE_IDLE)
     {
         return SYS_STATUS_BUSY;
     }
@@ -613,7 +549,8 @@ bool DRV_BME280_Read(const DRV_HANDLE handle)
     dObj = &gDrvBME280Obj[clientObj->drvIndex];
     dObj->status = SYS_STATUS_BUSY;
     dObj->activeClient = clientObj;
-    dObj->taskState = DRV_BME280_TASK_READ;
+    dObj->taskState = DRV_BME280_TASK_STATE_READ;
+    dObj->nextTaskState = DRV_BME280_TASK_STATE_PROCESS_READ;
     dObj->event = DRV_BME280_EVENT_READ_DONE;
 
     /* send the request */
@@ -626,6 +563,7 @@ bool DRV_BME280_Read(const DRV_HANDLE handle)
 void DRV_BME280_Tasks(SYS_MODULE_OBJ object)
 {
     DRV_BME280_OBJ* dObj = NULL;
+    int16_t msb, lsb;
     
     if ((object == SYS_MODULE_OBJ_INVALID) ||
         (object >= DRV_BME280_INSTANCES_NUMBER))
@@ -634,19 +572,19 @@ void DRV_BME280_Tasks(SYS_MODULE_OBJ object)
         return;
     }
     
-    dObj = &gDrvBME280Obj[object];  
+    dObj = &gDrvBME280Obj[object];
     
     if (dObj->status == SYS_STATUS_BUSY)
     {
         return;
     }
-    
+        
     switch (dObj->taskState)
     {
-        case DRV_BME280_TASK_INIT:
+        case DRV_BME280_TASK_STATE_INIT:
             /* perform a device reset */    
-            /* advance the reset we will automatically advance to the next state */
-            dObj->taskState = DRV_BME280_TASK_READ_ID;    
+            /* after the reset we will automatically advance to the next state */
+            dObj->taskState = DRV_BME280_TASK_STATE_READ_ID;
             dObj->activeClient = NULL;
             dObj->event = DRV_BME280_EVENT_WRITE_DONE;
             dObj->status = SYS_STATUS_BUSY;
@@ -660,40 +598,104 @@ void DRV_BME280_Tasks(SYS_MODULE_OBJ object)
             dObj->plibInterface->write(dObj->configParams.sensorAddr, (void*) dObj->writeBuffer, 2);
             break;
         
-        case DRV_BME280_TASK_READ_ID:
+        case DRV_BME280_TASK_STATE_READ_ID:
             /* read the device ID */        
             _DRV_BME280_ReadReg(dObj, DRV_BME280_CHIP_ID_ADDR, 1);
+            dObj->nextTaskState = DRV_BME280_TASK_STATE_PROCESS_READ_ID;
             break;
             
-        case DRV_BME280_TASK_READ_CALIBT:
+        case DRV_BME280_TASK_STATE_PROCESS_READ_ID:
+            /* read ID completed */
+            dObj->deviceID = dObj->readBuffer[0];
+            if (dObj->deviceID == DRV_BME280_CHIP_ID)
+            {
+                dObj->taskState = DRV_BME280_TASK_STATE_READ_CALIBT;
+            } else {
+                dObj->taskState = DRV_BME280_TASK_STATE_ERROR;
+            }
+            break;
+            
+        case DRV_BME280_TASK_STATE_READ_CALIBT:
             /* read the Temperature calibration data into the readBuffer */
             /* state will only be advanced once read has completed and cal data stored */
             _DRV_BME280_ReadReg(dObj, DRV_BME280_CALIB_TEMP_DIG_T1_LSB_REG, 6);        
+            dObj->nextTaskState = DRV_BME280_TASK_STATE_PROCESS_READ_CALIBT;
             break;
-            
-        case DRV_BME280_TASK_READ_CALIBP:
+
+        case DRV_BME280_TASK_STATE_PROCESS_READ_CALIBT:
+            /* record the temperature calibration data */
+            dObj->calibData.dig_T1 = DRV_BME280_CONCAT_BYTES(dObj->readBuffer[1], dObj->readBuffer[0]);
+            dObj->calibData.dig_T2 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[3], dObj->readBuffer[2]);
+            dObj->calibData.dig_T3 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[5], dObj->readBuffer[4]);
+            /* advance the initialisation to the next state */
+            dObj->taskState = DRV_BME280_TASK_STATE_READ_CALIBP;
+            break;
+                        
+        case DRV_BME280_TASK_STATE_READ_CALIBP:
             /* read the Pressure calibration data into the readBuffer */
             /* state will only be advanced once read has completed and cal data stored */ 
-            _DRV_BME280_ReadReg(dObj, DRV_BME280_CALIB_PRESS_DIG_P1_LSB_REG, 18);             
+            _DRV_BME280_ReadReg(dObj, DRV_BME280_CALIB_PRESS_DIG_P1_LSB_REG, 18);   
+            dObj->nextTaskState = DRV_BME280_TASK_STATE_PROCESS_READ_CALIBP;
             break;
             
-        case DRV_BME280_TASK_READ_CALIBH1:
+        case DRV_BME280_TASK_STATE_PROCESS_READ_CALIBP:
+            /* record pressure calibration data */
+            dObj->calibData.dig_P1 = DRV_BME280_CONCAT_BYTES(dObj->readBuffer[1], dObj->readBuffer[0]);
+            dObj->calibData.dig_P2 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[3], dObj->readBuffer[2]);
+            dObj->calibData.dig_P3 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[5], dObj->readBuffer[4]);
+            dObj->calibData.dig_P4 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[7], dObj->readBuffer[6]);
+            dObj->calibData.dig_P5 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[9], dObj->readBuffer[8]);
+            dObj->calibData.dig_P6 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[11], dObj->readBuffer[10]);
+            dObj->calibData.dig_P7 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[13], dObj->readBuffer[12]);
+            dObj->calibData.dig_P8 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[15], dObj->readBuffer[14]);
+            dObj->calibData.dig_P9 = (int16_t) DRV_BME280_CONCAT_BYTES(dObj->readBuffer[17], dObj->readBuffer[16]);
+            /* advance the initialisation to the next state */
+            dObj->taskState = DRV_BME280_TASK_STATE_READ_CALIBH1;
+            break;
+            
+        case DRV_BME280_TASK_STATE_READ_CALIBH1:
             /* read the Humidity calibration data into the readBuffer */
             /* performed in 2 steps because the data is not contiguous */
             /* state will only be advanced once read has completed and cal data stored */
             _DRV_BME280_ReadReg(dObj, DRV_BME280_CALIB_HUM_DIG_H1_REG, 1); 
+            dObj->nextTaskState = DRV_BME280_TASK_STATE_PROCESS_READ_CALIBH1;
             break;
             
-        case DRV_BME280_TASK_READ_CALIBH2:
+        case DRV_BME280_TASK_STATE_PROCESS_READ_CALIBH1:
+            /* record humidity calibration data */
+            dObj->calibData.dig_H1 = dObj->readBuffer[0];
+            /* advance the initialisation to the next state */
+            dObj->taskState = DRV_BME280_TASK_STATE_READ_CALIBH2;   
+            break;
+            
+        case DRV_BME280_TASK_STATE_READ_CALIBH2:
             /* read the Humidity calibration data into the readBuffer */
             /* state will only be advanced once read has completed and cal data stored */
             _DRV_BME280_ReadReg(dObj, DRV_BME280_CALIB_HUM_DIG_H2_LSB_REG, 7);  
+            dObj->nextTaskState = DRV_BME280_TASK_STATE_PROCESS_READ_CALIBH2;
+            break;
+            
+        case DRV_BME280_TASK_STATE_PROCESS_READ_CALIBH2:
+            dObj->calibData.dig_H2 = (int16_t) dObj->readBuffer[1] << 8;
+            dObj->calibData.dig_H2 |= dObj->readBuffer[0];
+            dObj->calibData.dig_H3 = dObj->readBuffer[2];
+
+            msb = (int16_t) (int8_t)dObj->readBuffer[3] * 16;
+            lsb = (int16_t) (dObj->readBuffer[4] & 0x0F);
+            dObj->calibData.dig_H4 = msb | lsb;
+
+            msb = (int16_t) (int8_t)dObj->readBuffer[5] * 16;
+            lsb = (int16_t) (dObj->readBuffer[4] >> 4);
+            dObj->calibData.dig_H5 = msb | lsb;
+
+            dObj->calibData.dig_H6 = dObj->readBuffer[6];                
+            dObj->taskState = DRV_BME280_TASK_STATE_SET_OVERSAMPLING1;
             break;
              
-        case DRV_BME280_SET_OVERSAMPLING1:
+        case DRV_BME280_TASK_STATE_SET_OVERSAMPLING1:
             /*set the power mode to normal sampling */
             /* this must occur before power mode set */
-            dObj->taskState = DRV_BME280_TASK_POWERMODE_SET;    
+            dObj->taskState = DRV_BME280_TASK_STATE_SET_POWERMODE;    
             dObj->activeClient = NULL;
             dObj->event = DRV_BME280_EVENT_WRITE_DONE;
             dObj->status = SYS_STATUS_BUSY;
@@ -704,9 +706,9 @@ void DRV_BME280_Tasks(SYS_MODULE_OBJ object)
             dObj->plibInterface->write(dObj->configParams.sensorAddr, (void*) dObj->writeBuffer, 2);
             break;
 
-        case DRV_BME280_TASK_POWERMODE_SET:
+        case DRV_BME280_TASK_STATE_SET_POWERMODE:
             /*set the power mode to normal sampling with x1 temp and pressure sampling*/
-            dObj->taskState = DRV_BME280_TASK_IDLE;    
+            dObj->taskState = DRV_BME280_TASK_STATE_IDLE;    
             dObj->activeClient = NULL;
             dObj->event = DRV_BME280_EVENT_WRITE_DONE;
             dObj->status = SYS_STATUS_BUSY;
@@ -718,15 +720,27 @@ void DRV_BME280_Tasks(SYS_MODULE_OBJ object)
             dObj->plibInterface->write(dObj->configParams.sensorAddr, (void*) dObj->writeBuffer, 2);
             break;
             
-        case DRV_BME280_TASK_READ:
-            /* read is currently being performed */
-            break;
-            
-        case DRV_BME280_TASK_IDLE:
+        case DRV_BME280_TASK_STATE_IDLE:
             /* do nothing until the next read interval or async read */
             break;
             
-        case DRV_BME280_TASK_ERROR:
+        case DRV_BME280_TASK_STATE_READ:
+            /* read is currently being performed and we are waiting for the result
+             * the peripheral callback will advance the state to PROCESS_READ */
+            break;       
+            
+        case DRV_BME280_TASK_STATE_PROCESS_READ:
+                /* parse the read data from the sensor */
+                _DRV_BME280_ParseData(dObj, dObj->readBuffer);
+                
+                /* compensate the data */
+                dObj->compData.temperature = _DRV_BME280_Compensate_T(&dObj->uncompData, &dObj->calibData);
+                dObj->compData.pressure = _DRV_BME280_Compensate_P(&dObj->uncompData, &dObj->calibData);
+                dObj->compData.humidity = _DRV_BME280_Compensate_H(&dObj->uncompData, &dObj->calibData);
+                dObj->taskState = DRV_BME280_TASK_STATE_IDLE;
+            break;
+            
+        case DRV_BME280_TASK_STATE_ERROR:
             break;
     }
 }

@@ -79,7 +79,7 @@ void __attribute__((optimize("-O1"),section(".text.Dummy_Handler"),long_call, no
 }
 
 /* MISRAC 2012 deviation block start */
-/* MISRA C-2012 Rule 8.6 deviated 124 times.  Deviation record ID -  H3_MISRAC_2012_R_8_6_DR_1 */
+/* MISRA C-2012 Rule 8.6 deviated 127 times.  Deviation record ID -  H3_MISRAC_2012_R_8_6_DR_1 */
 /* Device vectors list dummy definition*/
 extern void SVCall_Handler             ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void PendSV_Handler             ( void ) __attribute__((weak, alias("Dummy_Handler")));
@@ -147,6 +147,10 @@ extern void SERCOM6_0_Handler          ( void ) __attribute__((weak, alias("Dumm
 extern void SERCOM6_1_Handler          ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void SERCOM6_2_Handler          ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void SERCOM6_OTHER_Handler      ( void ) __attribute__((weak, alias("Dummy_Handler")));
+extern void SERCOM7_0_Handler          ( void ) __attribute__((weak, alias("Dummy_Handler")));
+extern void SERCOM7_1_Handler          ( void ) __attribute__((weak, alias("Dummy_Handler")));
+extern void SERCOM7_2_Handler          ( void ) __attribute__((weak, alias("Dummy_Handler")));
+extern void SERCOM7_OTHER_Handler      ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void CAN0_Handler               ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void CAN1_Handler               ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void USB_OTHER_Handler          ( void ) __attribute__((weak, alias("Dummy_Handler")));
@@ -204,7 +208,6 @@ extern void ICM_Handler                ( void ) __attribute__((weak, alias("Dumm
 extern void PUKCC_Handler              ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void QSPI_Handler               ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void SDHC0_Handler              ( void ) __attribute__((weak, alias("Dummy_Handler")));
-extern void SDHC1_Handler              ( void ) __attribute__((weak, alias("Dummy_Handler")));
 
 
 /* MISRAC 2012 deviation block end */
@@ -300,10 +303,10 @@ const H3DeviceVectors exception_table=
     .pfnSERCOM6_1_Handler          = SERCOM6_1_Handler,
     .pfnSERCOM6_2_Handler          = SERCOM6_2_Handler,
     .pfnSERCOM6_OTHER_Handler      = SERCOM6_OTHER_Handler,
-    .pfnSERCOM7_0_Handler          = SERCOM7_I2C_InterruptHandler,
-    .pfnSERCOM7_1_Handler          = SERCOM7_I2C_InterruptHandler,
-    .pfnSERCOM7_2_Handler          = SERCOM7_I2C_InterruptHandler,
-    .pfnSERCOM7_OTHER_Handler      = SERCOM7_I2C_InterruptHandler,
+    .pfnSERCOM7_0_Handler          = SERCOM7_0_Handler,
+    .pfnSERCOM7_1_Handler          = SERCOM7_1_Handler,
+    .pfnSERCOM7_2_Handler          = SERCOM7_2_Handler,
+    .pfnSERCOM7_OTHER_Handler      = SERCOM7_OTHER_Handler,
     .pfnCAN0_Handler               = CAN0_Handler,
     .pfnCAN1_Handler               = CAN1_Handler,
     .pfnUSB_OTHER_Handler          = USB_OTHER_Handler,
@@ -362,7 +365,7 @@ const H3DeviceVectors exception_table=
     .pfnPUKCC_Handler              = PUKCC_Handler,
     .pfnQSPI_Handler               = QSPI_Handler,
     .pfnSDHC0_Handler              = SDHC0_Handler,
-    .pfnSDHC1_Handler              = SDHC1_Handler,
+    .pfnSDHC1_Handler              = SDHC1_InterruptHandler,
 
 
 };
